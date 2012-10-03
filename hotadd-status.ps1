@@ -1,6 +1,7 @@
 # ==============================================================================================
 # NAME: hotadd-status.ps1
 # AUTHOR: Eric Kiel eric<dot>kiel<at>collideoscope<dot>org
+# Originally found @ http://ict-freak.nl/2009/10/05/powercli-check-cpumemory-hot-add/
 # DATE  : 10/02/2012
 # COMMENT: This script will connect to a VMware Virtual Center server and get VM status on 
 # CPUAddEnagbled, CPUHotRemoveEnabled, and MemoryHotAddEnabled.
@@ -11,6 +12,9 @@
 # $vcenter - vCenter host name
 # REQUIREMENTS: VMware vSphere PowerCLI
 # ==============================================================================================
+
+# Add in VMware PS Snapin
+add-pssnapin VMware.VimAutomation.Core -ErrorAction SilentlyContinue
 
 # Comment out if hard coding a vCenter below
 $vcenter = Read-Host "Please enter the the vCenter you would like to connect to"
