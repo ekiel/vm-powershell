@@ -1,14 +1,13 @@
 # ==============================================================================================
 # NAME: vsphere5_hardening.ps1
 # AUTHOR: Eric Kiel eric<dot>kiel<at>collideoscope<dot>org
-# DATE  : 10/25/2012
+# DATE  : 11/01/2012
 # COMMENT: This script will modify .vmx files to add parameters to increase VM security. Please
 # read and understand the security guide found at
 # http://www.vmware.com/support/support-resources/hardening-guides.html
 # Please note that the VM must be shutdown and powered back on for additions to VMX file to take
 # effect.
-# VERSION: 1.4 - corrected isolation.device.connectable.disable - I had mistaken it for 
-# isolation.tools.connectable.disable which is not a valid option. Happy hardening!
+# VERSION: 1.4.1 - re-enabled automatic tools install/upgrade; adjusted max consoles to 2
 # USAGE: .\vsphere5_hardening.ps1
 # REQUIREMENTS: VMware vSphere PowerCLI
 # ==============================================================================================
@@ -43,8 +42,8 @@ $ExtraOptions = @{
 	"log.rotateSize"="100000";
 
 	# Limit console connections - choose how many consoles are allowed
-	"RemoteDisplay.maxConnections"="1";
-	#"RemoteDisplay.maxConnections"="2";
+	#"RemoteDisplay.maxConnections"="1";
+	"RemoteDisplay.maxConnections"="2";
 
 	# Remove floppy device - hardware needs to be removed by some other method
 	#"floppy0.present"="false";
@@ -93,10 +92,10 @@ $ExtraOptions = @{
 	#"logging"="false";	
 
 	# 5.0 Disable HGFS file transfers [automated VMTools Upgrade]
-	"isolation.tools.hgfsServerSet.disable"="true";
+	"isolation.tools.hgfsServerSet.disable"="false";
 
 	# Disable tools auto-install; must be manually initiated.
-	"isolation.tools.autoInstall.disable"="true";
+	"isolation.tools.autoInstall.disable"="false";
 
 	# 5.0 Disable VM Monitor Control - VM not aware of hypervisor
 	#"isolation.monitor.control.disable"="true";
@@ -119,7 +118,7 @@ Foreach ($Option in $ExtraOptions.GetEnumerator()) {
 #$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"Config.Template"="false"}   # Do it!
 
 # Only going to get dev vm's for now
-$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"name"="dev*"}
+$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"name"="sdev*"}
 
 foreach($VM in $VMs){
     $vm.ReconfigVM($vmConfigSpec)
