@@ -1,11 +1,12 @@
 # ==============================================================================================
 # NAME: vmware_view_report.ps1
 # AUTHOR: Eric Kiel eric<dot>kiel<at>collideoscope<dot>org
-# DATE : 11/13/2012
-# COMMENT: This script will connect to a VMware View Connection Server and report on existing
-# Pools with desktop count and status
-# VERSION: 1.0 - Original script
-# USAGE: .\vmware_view_report.ps1 [Must be run on connection server]
+# DATE : 11/14/2012
+# COMMENT: This script will connect to a VMware View Connection Server and report on changes
+# made in the past 24 hours and Pool status with desktop count.
+# VERSION: 1.1 - Updated to include changes in past 72 hours.
+# USAGE: .\vmware_view_report.ps1 [Must be run on connection server; user running script must
+# have administrator rights assigned in View Manager]
 # Variables:
 # $domain - domain that View resides in; yourdomain.com
 # $mailserver - SMTP Mail relay
@@ -33,7 +34,12 @@ $style = $style + "</style>"
 
 $date = get-date -format MM-dd-yyyy
 
+# Generate report on changes in the past 72 hours
+$changes = get-eventreport -viewname config_changes -startdate (get-date).AddDays(-3) | select time, moduleandeventtext, userdisplayname, desktopid | convertto-html -head $style
+#Clean up the style... need to figure out why this loops
+clear-variable style
 # Generate Pool Report...
-$message = get-pool | select Pool_ID, DisplayName, Description, DeliveryModel, Enabled, Persistence, MaximumCount, MinimumCount | convertto-html -head $style
+$pools = get-pool | select Pool_ID, DisplayName, Description, DeliveryModel, Enabled, Persistence, MaximumCount, MinimumCount | convertto-html -head $style
+
 # Send email with findings...
-send-mailmessage –BodyasHtml -from "$viewconnectionserver@$domain" -to "$email1", "$email2" -subject "View Pool Report for $date" -body "$message" -smtpserver $mailserver
+send-mailmessage –BodyasHtml -from "$viewconnectionserver@$domain" -to "$email1", "$email2" -subject "VMware View Report for $date" -body "View Changes in the Past 72 Hours $changes Pool Report $pools " -smtpserver $mailserver
