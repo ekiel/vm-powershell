@@ -1,13 +1,13 @@
 # ==============================================================================================
 # NAME: vsphere5_hardening.ps1
 # AUTHOR: Eric Kiel eric<dot>kiel<at>collideoscope<dot>org
-# DATE  : 11/01/2012
+# DATE  : 12/5/2012
 # COMMENT: This script will modify .vmx files to add parameters to increase VM security. Please
 # read and understand the security guide found at
 # http://www.vmware.com/support/support-resources/hardening-guides.html
 # Please note that the VM must be shutdown and powered back on for additions to VMX file to take
 # effect.
-# VERSION: 1.4.1 - re-enabled automatic tools install/upgrade; adjusted max consoles to 2
+# VERSION: 1.5 - added ESXi 4.x specific tag to disable VIX communication
 # USAGE: .\vsphere5_hardening.ps1
 # REQUIREMENTS: VMware vSphere PowerCLI
 # ==============================================================================================
@@ -31,7 +31,7 @@ $ExtraOptions = @{
 	"isolation.tools.copy.disable"="true";
 	"isolation.tools.paste.disable"="true";
 	"isolation.tools.dnd.disable"="false";
-	"isolation.tools.setGUIOptions.Enable"="false";
+	"isolation.tools.setGUIOptions.enable"="false";
 
 	# Disable VMCI
 	"vmci0.unrestricted"="false";
@@ -86,7 +86,8 @@ $ExtraOptions = @{
 	"isolation.tools.guestDnDVersionSet.disable"="true";
 
 	# Disable VIX Messaging from VM
-	"isolation.tools.vixMessage.disable"="true";
+	"isolation.tools.vixMessage.disable"="true"; # ESXi 5.x+
+	"guest.command.enabled"="false"; # ESXi 4.x
 
 	# Disable logging
 	#"logging"="false";	
@@ -102,7 +103,6 @@ $ExtraOptions = @{
 
 	# 5.0 Do not send host information to guests
 	"tools.guestlib.enableHostInfo"="false";
-
 }   # build our configspec using the hashtable from above.
 
 $vmConfigSpec = New-Object VMware.Vim.VirtualMachineConfigSpec
@@ -117,8 +117,8 @@ Foreach ($Option in $ExtraOptions.GetEnumerator()) {
 # Get all vm's not including templates
 #$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"Config.Template"="false"}   # Do it!
 
-# Only going to get dev vm's for now
-$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"name"="sdev*"}
+# Only going to get dev vm's for now; use this to selectively target VMs...
+$VMs = Get-View -ViewType VirtualMachine -Property Name -Filter @{"name"="dev*"}
 
 foreach($VM in $VMs){
     $vm.ReconfigVM($vmConfigSpec)
